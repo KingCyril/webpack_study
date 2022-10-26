@@ -2,13 +2,18 @@
  * @Author: Cyril- 1978919203@qq.com
  * @Date: 2022-10-25 19:10:53
  * @LastEditors: Cyril- 1978919203@qq.com
- * @LastEditTime: 2022-10-25 21:43:10
+ * @LastEditTime: 2022-10-26 08:35:22
  * @FilePath: /webpack_study/Basic/webpack.config.js
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+ */
+/**
+ * 生产模式 不需要devserver开发服务器 npx webpack --config ./webpack.prod.js || npm run build(已经在package.json配置好了)
  */
 const path = require('path');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+// 将css样式提取到css文件中，然后通过link标签引入，不在js文件中,调用new MiniCssExtractPlugin(),然后将所有style-loader换成MiniCssExtractPlugin.loader
+const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 
 module.exports = {
   entry: './src/main.js',
@@ -25,25 +30,74 @@ module.exports = {
         // 数组执行顺序，从右向左，从下向上
         // css-loader 将css样式资源编译成commonJs的模块到js中
         // style-loader 将js中的css通过创建style标签添加到html中，使样式生效
-        use: ["style-loader", "css-loader"],
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          { // 需要给loader写配置项时要写成对象形式，此loader要写在cssloader之后，less，scss等loader之前
+            // 要在package.json中配置browserslist:['ie >= 8']会做兼容到ie8以上 比如测试display: flex; ===> display: -ms-flexbox;
+            // 不过开发中通常用这个"browserslist": ["last 2 version","> 1%","not dead"]
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: ['postcss-preset-env'], // 能解决绝大多数css兼容性问题
+              },
+            },
+          },
+        ],
       },
       {
         test: /\.less$/i,
         // 数组执行顺序，从右向左，从下向上
         // less-loader 将less文件编译成css资源
-        use: ["style-loader", "css-loader", "less-loader"],
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: ['postcss-preset-env'], // 能解决绝大多数css兼容性问题
+              },
+            },
+          },
+          "less-loader"
+        ],
       },
       {
         test: /\.s[ac]ss$/i,
         // 数组执行顺序，从右向左，从下向上
         // sass-loader 将sass文件编译成css资源
-        use: ["style-loader", "css-loader", "sass-loader"],
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: ['postcss-preset-env'], // 能解决绝大多数css兼容性问题
+              },
+            },
+          },
+          "sass-loader"
+        ],
       },
       {
         test: /\.styl$/i,
         // 数组执行顺序，从右向左，从下向上
         // stylus-loader 将styl文件编译成css资源
-        use: ["style-loader", "css-loader", "stylus-loader"],
+        use: [
+          MiniCssExtractPlugin.loader,
+          "css-loader",
+          {
+            loader: 'postcss-loader',
+            options: {
+              postcssOptions: {
+                plugins: ['postcss-preset-env'], // 能解决绝大多数css兼容性问题
+              },
+            },
+          },
+          "stylus-loader"
+        ],
       },
       {
         test: /\.(png|jpe?g|svg|gif)$/i,
@@ -90,12 +144,9 @@ module.exports = {
     new HtmlWebpackPlugin({
       template: path.resolve(__dirname, "public/index.html"),
     }),
+    new MiniCssExtractPlugin({
+      filename: "static/css/main.css"
+    })
   ],
-  // 开发服务器：不会输出打包资源的，只会在内存中编译打包
-  devServer: {
-    host: 'localhost',
-    port: 3000,
-    open: true,
-  },
   mode: 'development',
 };
