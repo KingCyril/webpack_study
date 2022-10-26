@@ -21,3 +21,8 @@ import './video/wife.mp4';
 const a = 2;
 console.log(a);
 console.log(sum(1, 3, 5, 4));
+
+if (module.hot) {
+  // 热模块替换：css-loader内置了样式的热模块替换，而js的话得手动配置，比如sum.js
+  module.hot.accept('./js/sum.js');
+}
