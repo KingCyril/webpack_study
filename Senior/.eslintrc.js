@@ -24,4 +24,5 @@ module.exports = {
     "semi": "error",
     "no-var": 2
   },
+  plugins: ['import'],
 };

@@ -9,7 +9,11 @@ module.exports = {
   entry: './src/main.js',
   output: {
     path: undefined,
-    filename: 'static/js/main.js',
+    filename: 'static/js/[name].js',
+    // 打包生成的其他js文件命名，比如动态import生成的单独文件命名
+    chunkFilename: "static/js/[name].chunk.js",
+    // 图片，字体等通过type:asset处理资源的，统一使用assetModuleFilename命名
+    assetModuleFilename: "static/media/[hash:10][ext][query]",
   },
   module: {
     rules: [
@@ -48,16 +52,16 @@ module.exports = {
                 maxSize: 20 * 1024
               }
             },
-            generator: {
-              filename: 'static/imgs/[hash:10][ext][query]'
-            }
+            // generator: {
+            //   filename: 'static/imgs/[hash:10][ext][query]'
+            // }
           },
           {
             test: /\.(ttf|woff2?|mp3|avi|mp4)$/i,
             type: 'asset/resource',
-            generator: {
-              filename: 'static/media/[hash:10][ext][query]'
-            }
+            // generator: {
+            //   filename: 'static/media/[hash:10][ext][query]'
+            // }
           },
           {
             test: /\.js$/,

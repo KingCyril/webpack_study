@@ -6,6 +6,8 @@ const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const CssMinimizerPlugin = require("css-minimizer-webpack-plugin");
 const TerserWebpackPlugin = require('terser-webpack-plugin');
 const ImageMinimizerPlugin = require("image-minimizer-webpack-plugin");
+const PreloadWebpackPlugin = require('@vue/preload-webpack-plugin');
+const WorkboxPlugin = require('workbox-webpack-plugin');
 
 // 获取电脑cpu核数
 const threads = os.cpus().length;
@@ -33,7 +35,11 @@ module.exports = {
   entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, 'dist'),
-    filename: 'static/js/main.js',
+    filename: 'static/js/[name].[hash:10].js',
+    // 打包生成的其他js文件命名，比如动态import生成的单独文件命名
+    chunkFilename: "static/js/[name].chunk.[hash:11].js",
+    // 图片，字体等通过type:asset处理资源的，统一使用assetModuleFilename命名
+    assetModuleFilename: "static/media/[hash:10][ext][query]",
     clean: true,
   },
   module: {
@@ -64,16 +70,16 @@ module.exports = {
                 maxSize: 20 * 1024
               }
             },
-            generator: {
-              filename: 'static/imgs/[hash:10][ext][query]'
-            }
+            // generator: {
+            //   filename: 'static/imgs/[hash:10][ext][query]'
+            // }
           },
           {
             test: /\.(ttf|woff2?|mp3|avi|mp4)$/i,
             type: 'asset/resource',
-            generator: {
-              filename: 'static/media/[hash:10][ext][query]'
-            }
+            // generator: {
+            //   filename: 'static/media/[hash:10][ext][query]'
+            // }
           },
           {
             test: /\.js$/,
@@ -117,7 +123,19 @@ module.exports = {
       template: path.resolve(__dirname, "public/index.html"),
     }),
     new MiniCssExtractPlugin({
-      filename: "static/css/main.css"
+      filename: "static/css/[name].css",
+      chunkFilename: "static/css/[name].chunk.css",
+    }),
+    new PreloadWebpackPlugin({ // 动态import资源在浏览器空闲的时候预加载
+      // rel: 'preload',
+      // as: 'script'
+      rel: 'prefetch',
+    }),
+    new WorkboxPlugin.GenerateSW({  // PWA离线访问技术，缓存到浏览器applation cache stroge中，要在mainjs中注册 注意serviceWorker需要在项目根目录下才能访问到，因策使用npm i serve -g;serve dist开启一个服务，禁网亦可访问
+      // 这些选项帮助快速启用 ServiceWorkers
+      // 不允许遗留任何“旧的” ServiceWorkers
+      clientsClaim: true,
+      skipWaiting: true,
     }),
   ],
   optimization: { // 压缩打包文件配置
@@ -156,6 +174,14 @@ module.exports = {
         },
       }),
     ],
+    // 代码分割配置，其他都用默认配置即可
+    // 作用：如果存在动态import，则会单独生成一个打包文件，用的时候再加载
+    splitChunks: {
+      chunks: "all",
+    },
+    runtimeChunk: {
+      name: entrypoint => `runtime-${entrypoint.name}.js`,
+    },
   },
   devtool: 'source-map', // 开发环境下打包后的资源报错映射到源文件具体位置
   mode: 'production',
