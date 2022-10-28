@@ -1,7 +1,7 @@
 const path = require('path');
-const os = require('os');
 const ESLintPlugin = require('eslint-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const { PassThrough } = require('stream');
 
 function getStyleLoader(pr) {
   return [
@@ -20,12 +20,12 @@ function getStyleLoader(pr) {
 }
 
 module.exports = {
-  entry: '../src/main.js',
+  entry: './src/main.js',
   output: {
     path: undefined,
-    finename: "static/js/[name].js",
+    filename: "static/js/[name].js",
     chunkFilename: "static/js/[name].chunk.js",
-    assertModuleFilename: "static/media/[hase:10][ext][query]"
+    assetModuleFilename: "static/media/[hase:10][ext][query]"
   },
   module: {
     rules: [
@@ -82,7 +82,20 @@ module.exports = {
       cacheLocation: path.resolve(__dirname, '../node_modules/.cache/eslintcache'), // 缓存路径
     }),
     new HtmlWebpackPlugin({
-      template: '../public/index.html'
+      template: path.resolve(__dirname, '../public/index.html')
     })
-  ]
+  ],
+  devServer: {
+    host: 'localhost',
+    port: 3000,
+    open: true,
+    hot: true,
+  },
+  // webpack解析模块加载选项
+  resolve: {
+    // 自动补全文件扩展名
+    extensions: ['.jsx', '.js', '.json']
+  },
+  devtool: 'cheap-module-source-map',
+  mode: 'development'
 }
