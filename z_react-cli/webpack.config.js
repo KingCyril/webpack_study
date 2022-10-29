@@ -4,7 +4,7 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin'); // css提取
 const CssMinimizerWebpackPlugin = require('css-minimizer-webpack-plugin'); // css压缩
 const TerserWebpackPlugiin = require('terser-webpack-plugin'); // js压缩
-const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
+// const ImageMinimizerPlugin = require('image-minimizer-webpack-plugin');
 const CopyPlugin = require("copy-webpack-plugin"); // 复制index.html
 const ReactRefreshWebpackPlugin = require('@pmmmwh/react-refresh-webpack-plugin');
 
@@ -25,7 +25,16 @@ function getStyleLoader(pr) {
         }
       }
     },
-    pr,
+    pr && {
+      loader: pr,
+      options: pr === 'less-loader' ? {
+        // antd 自定义主题颜色配置
+        lessOptions: {
+          modifyVars: { "@primary-color": "#1DA57A" },
+          javascriptEnabled: true,
+        }
+      } : {}
+    },
   ].filter(Boolean)
 }
 
@@ -119,6 +128,29 @@ module.exports = {
   optimization: {
     splitChunks: {
       chunks: 'all',
+      // nodemodules打包组
+      cacheGroups: {
+        // 防止依赖的包太多，都打包到一个文件中，那个文件会越来越大
+        // 也不易拆分太多，太多的话，网络请求多了
+        // react,react-dom,react-router-dom
+        react: {
+          test: /[\\/]node_modules[\\/]react(.*)?[\\/]/,
+          name: 'chunk-react',
+          priority: 40, // 优先级
+        },
+        // antd
+        antd: {
+          test: /[\\/]node_modules[\\/]antd[\\/]/,
+          name: 'chunk-antd',
+          priority: 30, // 优先级
+        },
+        // 剩下的单独打包
+        rest: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'chunk-rests',
+          priority: 20, // 优先级
+        },
+      }
     },
     runtimeChunk: {
       name: (entrypoiint) => `runtime~${entrypoiint.name}.js`
@@ -127,33 +159,11 @@ module.exports = {
     minimizer: [
       new CssMinimizerWebpackPlugin(),
       new TerserWebpackPlugiin(),
-      new ImageMinimizerPlugin({ // 压缩图片
-        minimizer: {
-          implementation: ImageMinimizerPlugin.imageminGenerate,
-          options: {
-            plugins: [
-              ["gifsicle", { interlaced: true }],
-              ["jpegtran", { progressive: true }],
-              ["optipng", { optimizationLevel: 5 }],
-              [
-                "svgo",
-                {
-                  plugins: [
-                    "preset-default",
-                    "prefixIds",
-                    {
-                      name: "sortAttrs",
-                      params: {
-                        xmInsOrder: "alphabetical"
-                      }
-                    }
-                  ]
-                },
-              ],
-            ],
-          }
-        },
-      }),
+      // 由于imagemin-jpegtra这个包下载不下来，这个注释掉
+      // new ImageMinimizerPlugin({ // 压缩图片
+      //    ...
+      //   },
+      // }),
     ],
   },
   // webpack解析模块加载选项
@@ -170,4 +180,5 @@ module.exports = {
   },
   devtool: isProduction ? 'source-map' : 'cheap-module-source-map',
   mode: isProduction ? 'production' : 'development',
+  performance: false, // 打包时关闭性能分析，提升打包速度
 }
