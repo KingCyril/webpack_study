@@ -9,18 +9,20 @@
 
 const path = require('path');
 
+const TestPlugin = require('./plugins/03_clean-plugin.js')
+
 module.exports = {
   entry: './src/main.js',
   output: {
     path: path.resolve(__dirname, './dist'),
     filename: 'js/[name].js',
-    clean: true,
+    // clean: true,
   },
   module: {
 
   },
   plugins: [
-
+    new TestPlugin()
   ],
-  mode: "development"
+  mode: "production"
 }
